@@ -1,0 +1,18 @@
+<resources>
+    <string name="app_name">Notes</string>
+    <string name="no_notes">Заметки отсутствуют</string>
+    <string name="title">Заголовок</string>
+    <string name="body">Текст заметки</string>
+    <string name="edit_note_title">Редактирование заметки</string>
+    <string name="no_title">Заметка</string>
+    <string name="note_search_hint">Поиск заметок</string>
+    <string name="notes_deleted">Заметки удалены.</string>
+    <string name="undo">Отмена</string>
+    <string name="sort_title">Сортировка</string>
+    <string-array name="sort_types">
+        <item>По алфавиту (по возрастанию)</item>
+        <item>По алфавиту (по убыванию)</item>
+        <item>По дате изменения (по возрастанию)</item>
+        <item>По дате изменения (по убыванию)</item>
+    </string-array>
+</resources>
