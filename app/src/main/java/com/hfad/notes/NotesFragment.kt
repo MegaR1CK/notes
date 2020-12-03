@@ -26,7 +26,10 @@ class NotesFragment : Fragment() {
     private val deletedNotes = mutableListOf<Note>()
     lateinit var snackbar: Snackbar
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+    override fun onCreateView(inflater: LayoutInflater,
+                              container: ViewGroup?,
+                              savedInstanceState: Bundle?): View? {
+
         val layout = inflater.inflate(R.layout.fragment_notes, container, false) // Настройка RecyclerView
         val notesRecycler = layout.recycler_notes
         helper = DatabaseHelper(notesRecycler.context)
@@ -84,8 +87,11 @@ class NotesFragment : Fragment() {
                 snackbar.setAction(resources.getText(R.string.undo)) {
                     (notesRecycler.adapter as RecyclerNoteAdapter).syncWithDatabase(notesRecycler.context)
                     deletedNotes.clear()
+                    no_notes_title.visibility = View.INVISIBLE
                 }
                 snackbar.show()
+                if ((notesRecycler.adapter as RecyclerNoteAdapter).notesParam.isEmpty())
+                    no_notes_title.visibility = View.VISIBLE
             }
             notesRecycler.forEach { // Скрыть интерфейс удаления заметок
                 it.delete_cb.visibility = View.INVISIBLE
@@ -163,6 +169,9 @@ class NotesFragment : Fragment() {
             snackbar.dismiss()
         }
         (view?.recycler_notes?.adapter as RecyclerNoteAdapter).syncWithDatabase(recycler_notes.context) // Обновление RecyclerView
+        if ((view?.recycler_notes?.adapter as RecyclerNoteAdapter).notesParam.isEmpty())
+            no_notes_title.visibility = View.VISIBLE
+        else no_notes_title.visibility = View.INVISIBLE
     }
 
     override fun onStop() {

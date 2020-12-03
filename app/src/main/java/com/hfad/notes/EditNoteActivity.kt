@@ -2,6 +2,7 @@ package com.hfad.notes
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.view.MenuItem
 import kotlinx.android.synthetic.main.activity_edit_note.*
 import java.text.SimpleDateFormat
 import java.util.*
@@ -17,6 +18,7 @@ class EditNoteActivity : AppCompatActivity() {
         setContentView(R.layout.activity_edit_note)
 
         setSupportActionBar(toolbar)
+        supportActionBar?.setHomeButtonEnabled(true)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
         val sdf = SimpleDateFormat("dd.MM.yy HH:mm", Locale.getDefault()) // Получить дату
@@ -39,5 +41,13 @@ class EditNoteActivity : AppCompatActivity() {
             else helper.addNote(title, body, currentDate)
             finish()
         }
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        if (item.itemId == android.R.id.home) {
+            this.finish()
+            return true
+        }
+        return super.onOptionsItemSelected(item)
     }
 }

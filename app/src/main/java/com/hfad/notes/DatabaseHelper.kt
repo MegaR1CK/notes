@@ -56,12 +56,13 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DB_NAME, null
     fun getNoteList(searchText: String? = null) : MutableList<Note> {
         val cursor = readableDatabase.query("NOTES", arrayOf("_id", "TITLE", "BODY", "DATE"),
                 null, null, null, null, null)
-        cursor.moveToFirst()
         var noteList = mutableListOf<Note>()
-        do {
-            noteList.add(Note(cursor.getString(1), cursor.getString(2),
-                    cursor.getString(3), cursor.getInt(0)))
-        } while (cursor.moveToNext())
+        if (cursor.moveToFirst()) {
+            do {
+                noteList.add(Note(cursor.getString(1), cursor.getString(2),
+                        cursor.getString(3), cursor.getInt(0)))
+            } while (cursor.moveToNext())
+        }
         cursor.close()
         readableDatabase.close()
         if (searchText != null) {
