@@ -3,6 +3,8 @@ package com.hfad.notes
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.view.*
 import android.view.inputmethod.InputMethodManager
 import androidx.fragment.app.Fragment
@@ -21,10 +23,10 @@ import kotlinx.coroutines.launch
 
 class NotesFragment : Fragment() {
 
-    lateinit var helper: DatabaseHelper
-    var savedSearchText: String? = null
+    private lateinit var helper: DatabaseHelper
+    private lateinit var snackbar: Snackbar
     private val deletedNotes = mutableListOf<Note>()
-    lateinit var snackbar: Snackbar
+    private var savedSearchText: String? = null
 
     override fun onCreateView(inflater: LayoutInflater,
                               container: ViewGroup?,
@@ -34,11 +36,14 @@ class NotesFragment : Fragment() {
         val notesRecycler = layout.recycler_notes
         helper = DatabaseHelper(notesRecycler.context)
         val standardAdapter = RecyclerNoteAdapter(helper.getNoteList()) // Настройка адаптера для RecyclerView
+        notesRecycler.adapter = standardAdapter
+        val notesAdapter = notesRecycler.adapter as RecyclerNoteAdapter
+
         val listener = object : RecyclerNoteAdapter.Listener {
             override fun onClick(position: Int) {
                 val intent = Intent(activity, EditNoteActivity :: class.java) // Перейти в EditNoteActivity
                 intent.putExtra(EditNoteActivity.EXTRA_NOTE_ID,
-                        (notesRecycler.adapter as RecyclerNoteAdapter).cardsAndNotes[notesRecycler[position]]) // Отправка позиции заметки в массиве в EditNoteActivity
+                        notesAdapter.cardsAndNotes[notesRecycler[position]]) // Отправка позиции заметки в массиве в EditNoteActivity
                 activity?.startActivity(intent)
             }
 
@@ -51,46 +56,59 @@ class NotesFragment : Fragment() {
                 add_note.visibility = View.INVISIBLE
                 standardAdapter.listener = object : RecyclerNoteAdapter.Listener { // Изменение поведения элементов меню при клике при переходе в режим удаления
                     override fun onClick(position: Int) {
-                        notesRecycler[position].delete_cb.isChecked = !notesRecycler[position].delete_cb.isChecked
+                        notesRecycler[position].delete_cb.isChecked =
+                                !notesRecycler[position].delete_cb.isChecked
                     }
                     override fun onLongClick(position: Int) {}
                 }
+                search_field.isEnabled = false
+                clear_search_btn.isEnabled = false
+                sort_btn.isEnabled = false
             }
         }
-        standardAdapter.listener = listener
-        notesRecycler.adapter = standardAdapter
+
+        notesAdapter.listener = listener
         val layoutManager = LinearLayoutManager(activity)
         notesRecycler.layoutManager = layoutManager
+
+
 
         val delOptionsListener = View.OnClickListener { btn -> // Поведение кнопок удаления
             if (btn.id == R.id.delete_btn) {
                 val helper = DatabaseHelper(notesRecycler.context)
                 notesRecycler.forEach {
                     if (it.delete_cb.isChecked) {
-                        val noteForDeleteId = (notesRecycler.adapter as RecyclerNoteAdapter).cardsAndNotes[it] ?: 0 // Получение заметки и ее удаление
+                        val noteForDeleteId = notesAdapter.cardsAndNotes[it] ?: 0 // Получение заметки и ее удаление
                         val noteForDelete = helper.getNote(noteForDeleteId)
                         deletedNotes.add(noteForDelete)
-                        (notesRecycler.adapter as RecyclerNoteAdapter).notesParam.remove(noteForDelete)
+                        notesAdapter.notesParam.remove(noteForDelete)
                     }
                 }
-                (notesRecycler.adapter as RecyclerNoteAdapter).notifyDataSetChanged() // Обновление RecyclerVIew
+                notesAdapter.notifyDataSetChanged() // Обновление RecyclerVIew
 
-                GlobalScope.launch {
-                    delay(3500)
+                clear_search_btn.isClickable = false
+                search_btn.isClickable = false
+                val handler = Handler(Looper.getMainLooper())
+                handler.postDelayed({
+                    search_btn.isClickable = true
+                    clear_search_btn.isClickable = true
                     deletedNotes.forEach {
                         helper.delNote(it.id)
                     }
                     deletedNotes.clear()
+                 }, 3500)
+
+                if (deletedNotes.isNotEmpty()) {
+                    snackbar = Snackbar.make(coordinator, resources.getText(R.string.notes_deleted), Snackbar.LENGTH_LONG)
+                    snackbar.setAction(resources.getText(R.string.undo)) {
+                        notesAdapter.syncWithDatabase(notesRecycler.context)
+                        deletedNotes.clear()
+                        no_notes_title.visibility = View.INVISIBLE
+                    }
+                    snackbar.show()
                 }
 
-                snackbar = Snackbar.make(coordinator, resources.getText(R.string.notes_deleted), Snackbar.LENGTH_LONG)
-                snackbar.setAction(resources.getText(R.string.undo)) {
-                    (notesRecycler.adapter as RecyclerNoteAdapter).syncWithDatabase(notesRecycler.context)
-                    deletedNotes.clear()
-                    no_notes_title.visibility = View.INVISIBLE
-                }
-                snackbar.show()
-                if ((notesRecycler.adapter as RecyclerNoteAdapter).notesParam.isEmpty())
+                if (notesAdapter.notesParam.isEmpty())
                     no_notes_title.visibility = View.VISIBLE
             }
             notesRecycler.forEach { // Скрыть интерфейс удаления заметок
@@ -100,9 +118,14 @@ class NotesFragment : Fragment() {
             delete_options.visibility = View.INVISIBLE
             add_note.visibility = View.VISIBLE
             standardAdapter.listener = listener
+            search_field.isEnabled = true
+            clear_search_btn.isEnabled = true
+            sort_btn.isEnabled = true
         }
         layout.delete_btn?.setOnClickListener(delOptionsListener)
         layout.back_btn?.setOnClickListener(delOptionsListener)
+
+
 
         val otherButtonsListener = View.OnClickListener { v -> // Назначение действий для кнопок добавления и поиска
             when (v?.id) {
@@ -111,9 +134,9 @@ class NotesFragment : Fragment() {
                     activity?.startActivity(intent)
                 }
                 R.id.search_btn -> {
-                    val searchAdapter = RecyclerNoteAdapter(helper.getNoteList(search_field.text.toString().trim())) // Создание и присваивание адаптера с найденными заметками
-                    searchAdapter.listener = listener
-                    notesRecycler.adapter = searchAdapter
+                    notesAdapter.notesParam = helper.getNoteList(search_field.text.toString().trim()) // Создание и присваивание адаптера с найденными заметками
+                    notesAdapter.notifyDataSetChanged()
+                    if (notesAdapter.notesParam.isEmpty()) no_notes_title.visibility = View.VISIBLE
                 }
                 R.id.sort_btn -> {
                     val dialog = SortDialog()
@@ -124,25 +147,32 @@ class NotesFragment : Fragment() {
                             override fun changeSort(type: SortDialog.SortType?) {
                                 when (type) {
                                     SortDialog.SortType.AlphabetAscend ->
-                                        (notesRecycler.adapter as RecyclerNoteAdapter).notesParam.sortBy { it.title }
+                                        notesAdapter.notesParam.sortBy { it.title }
                                     SortDialog.SortType.AlphabetDescend ->
-                                        (notesRecycler.adapter as RecyclerNoteAdapter).notesParam.sortByDescending { it.title }
+                                        notesAdapter.notesParam.sortByDescending { it.title }
                                     SortDialog.SortType.DateAscend ->
-                                        (notesRecycler.adapter as RecyclerNoteAdapter).notesParam.sortBy { it.lastEditDate }
+                                        notesAdapter.notesParam.sortBy { it.lastEditDate }
                                     SortDialog.SortType.DateDescend ->
-                                        (notesRecycler.adapter as RecyclerNoteAdapter).notesParam.sortByDescending { it.lastEditDate }
+                                        notesAdapter.notesParam.sortByDescending { it.lastEditDate }
                                 }
-                                (notesRecycler.adapter as RecyclerNoteAdapter).notifyDataSetChanged()
+                                notesAdapter.notifyDataSetChanged()
                             }
                         }
                     }
                 }
                 R.id.clear_search_btn -> {
-                    notesRecycler.adapter = standardAdapter // Сброс поиска
+                    notesAdapter.notesParam = helper.getNoteList()
+                    notesAdapter.notifyDataSetChanged()
+                    if (notesAdapter.notesParam.isNotEmpty())
+                        no_notes_title.visibility = View.INVISIBLE
+                    else no_notes_title.visibility = View.VISIBLE
                     search_field.text.clear()
                 }
             }
         }
+
+
+
         notesRecycler.setOnTouchListener { v, event -> // При касании снять фокус с search_field и спрятать клавиатуру
             if (event.action == MotionEvent.ACTION_UP) {
                 layout.search_field.clearFocus()
@@ -159,6 +189,7 @@ class NotesFragment : Fragment() {
         return layout
     }
 
+
     override fun onStart() {
         super.onStart()
         if (deletedNotes.isNotEmpty()) {
@@ -168,11 +199,13 @@ class NotesFragment : Fragment() {
             deletedNotes.clear()
             snackbar.dismiss()
         }
-        (view?.recycler_notes?.adapter as RecyclerNoteAdapter).syncWithDatabase(recycler_notes.context) // Обновление RecyclerView
-        if ((view?.recycler_notes?.adapter as RecyclerNoteAdapter).notesParam.isEmpty())
+        val notesAdapter = view?.recycler_notes?.adapter as RecyclerNoteAdapter
+        notesAdapter.syncWithDatabase(recycler_notes.context) // Обновление RecyclerView
+        if (notesAdapter.notesParam.isEmpty())
             no_notes_title.visibility = View.VISIBLE
         else no_notes_title.visibility = View.INVISIBLE
     }
+
 
     override fun onStop() {
         super.onStop()
