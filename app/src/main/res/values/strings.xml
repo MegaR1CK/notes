@@ -5,7 +5,7 @@
     <string name="body">Текст заметки</string>
     <string name="edit_note_title">Редактирование заметки</string>
     <string name="no_title">Заметка</string>
-    <string name="note_search_hint">Поиск заметок</string>
+    <string name="search_title">Поиск</string>
     <string name="notes_deleted">Заметки удалены.</string>
     <string name="undo">Отмена</string>
     <string name="sort_title">Сортировка</string>

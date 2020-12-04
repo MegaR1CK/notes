@@ -12,75 +12,17 @@
         android:focusable="true"
         android:focusableInTouchMode="true">
 
-        <EditText
-            android:id="@+id/search_field"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="5dp"
-            android:background="@drawable/btn_round_background"
-            android:backgroundTint="@color/white"
-            android:hint="@string/note_search_hint"
-            android:inputType="text"
-            android:maxLines="1"
-            android:padding="8dp"
-            app:layout_constraintEnd_toStartOf="@+id/search_btn"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-
-        <ImageButton
-            android:id="@+id/clear_search_btn"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="4dp"
-            android:layout_marginBottom="2dp"
-            android:backgroundTint="@color/transparent"
-            android:padding="3dp"
-            app:layout_constraintBottom_toBottomOf="@+id/search_field"
-            app:layout_constraintEnd_toEndOf="@+id/search_field"
-            app:layout_constraintTop_toTopOf="@+id/search_field"
-            app:srcCompat="@drawable/baseline_clear_black_18" />
-
-        <ImageButton
-            android:id="@+id/search_btn"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="5dp"
-            android:background="@drawable/btn_round_background"
-            android:backgroundTint="@color/purple_500"
-            android:padding="5dp"
-            android:src="@drawable/baseline_search_white_24"
-            app:layout_constraintBottom_toBottomOf="@+id/search_field"
-            app:layout_constraintStart_toEndOf="@+id/search_field"
-            app:layout_constraintTop_toTopOf="@+id/search_field"
-            app:layout_constraintEnd_toStartOf="@+id/sort_btn"/>
-
-        <ImageButton
-            android:id="@+id/sort_btn"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="5dp"
-            android:layout_marginBottom="5dp"
-            android:background="@drawable/btn_round_background"
-            android:backgroundTint="@color/purple_500"
-            android:padding="5dp"
-            app:layout_constraintBottom_toBottomOf="@+id/search_field"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/search_btn"
-            app:layout_constraintTop_toTopOf="parent"
-            app:srcCompat="@drawable/baseline_sort_white_24" />
-
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recycler_notes"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_marginTop="5dp"
             android:overScrollMode="never"
             android:scrollbarStyle="outsideInset"
             android:scrollbars="vertical"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/search_field"
+            app:layout_constraintTop_toTopOf="parent"
             tools:context=".NotesFragment" />
 
 
